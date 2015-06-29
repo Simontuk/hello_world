@@ -1,0 +1,26 @@
+#PBS -m abe
+#! /bin/bash
+
+
+echo "Hello World!"
+cd /icgc/dkfzlsdf/analysis/B080/steiger/scripts
+#ls /icgc/dkfzlsdf/analysis/B080/steiger/data > ALL
+
+
+
+
+echo "Calculating STAT for $data TCGA Data"
+
+DATA="/icgc/dkfzlsdf/analysis/B080/steiger"
+cd "$DATA/data"
+
+
+cd "$data"
+mkdir output
+echo ls
+if [ -s methylation450_NArm.txt ]; then
+  echo "Calculating Statistics"
+  Rscript-3.1.2 --vanilla /icgc/dkfzlsdf/analysis/B080/steiger/scripts/01_loadData.ALL.R $data
+
+fi
+echo "Finished $data"

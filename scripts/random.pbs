@@ -1,0 +1,6 @@
+#!/bin/sh
+cd $HOME
+sleep 120
+for i in {1..100}; do
+     echo $RANDOM >> rand.list
+done

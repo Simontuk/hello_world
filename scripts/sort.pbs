@@ -1,0 +1,4 @@
+#!/bin/sh
+cd $HOME
+sort -n rand.list > sorted.list
+sleep 30

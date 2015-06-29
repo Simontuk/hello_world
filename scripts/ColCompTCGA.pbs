@@ -1,0 +1,8 @@
+#PBS -o colTCGA.log
+#PBS -j oe
+#PBS -l walltime=12:00:00,mem=150g
+#PBS -m abe 
+
+cd /icgc/dkfzlsdf/analysis/B080/steiger/scripts
+sh CollectComputeTCGA.sh ${dataset}
+

@@ -1,0 +1,8 @@
+#PBS -m abe
+#! /bin/bash
+
+DATA="/icgc/dkfzlsdf/analysis/B080/steiger"
+#cd "$DATA/data"
+
+echo "Calcualting Correlation"
+Rscript-3.1.2 --vanilla $DATA/scripts/02_corMX.ALL.R $data

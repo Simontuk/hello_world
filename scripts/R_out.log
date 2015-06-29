@@ -1,0 +1,91 @@
+We are in the /icgc/dkfzlsdf/analysis/B080/steiger directory
+We are now in /icgc/dkfzlsdf/analysis/B080/steiger/scripts, running an R script
+
+R version 3.0.0 (2013-04-03) -- "Masked Marvel"
+Copyright (C) 2013 The R Foundation for Statistical Computing
+Platform: x86_64-unknown-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> #############################################################################
+> ### Loads methylation and expression datasets and returns a
+> ### data frame for each of these data types
+> #############################################################################
+> library(parallel)
+> 
+> dataset <- 'ACC'
+> 
+> ## adapt path to dataset
+> main.dir <- '/icgc/dkfzlsdf/analysis/B080/steiger'
+> data.dir <- file.path(main.dir,'data',dataset)
+> out.dir <- file.path(data.dir,'output')
+> meth.dir <- file.path(data.dir)
+> exp.dir <- file.path(data.dir)
+> 
+> 
+> 
+> ## A . READ METHYLATION DATA
+> 
+> M <- read.table(file.path(meth.dir,'methylation450_NArm.txt'),
++                 sep="\t",header=T,row.names=1,fill=TRUE)
+> M.id <- colnames(M)
+> M.id <- sapply(lapply(strsplit(M.id,"\\."),'[',1:4),function(x) {y <- paste0(x,collapse="."); gsub("[A-Z]$","",y)})
+> colnames(M) <- M.id
+> 
+> ## B. READ EXPRESSION DATA
+> 
+> X <- read.table(file.path(exp.dir,'ACC.uncv2.mRNAseq_RSEM_normalized_log2_PARADIGM.txt'),
++                 sep="\t",header=T,row.names=1)
+> i.na <- which(apply(X,1,function(x) {sum(!is.na(x))==0}))
+> X <- X[-i.na,]
+> X.id <- colnames(X)
+> 
+> 
+> ## SELECTING COMMON SAMPLES
+> 
+> common <- intersect(X.id,M.id)
+> i.m <- match(common,M.id)
+> i.x <- match(common,X.id)
+> 
+> X.acc <- X[,i.x]
+> M.acc <- M[,i.m]
+> 
+> i.cg <- grep("cg",rownames(M.acc))
+> M.acc <- M.acc[i.cg,]
+> 
+> message('Computing median and sd ....')
+Computing median and sd ....
+> STAT.M <- data.frame(sd=apply(M.acc,1,sd,na.rm=T),
++                      iqr=apply(M.acc,1,IQR,na.rm=T),
++                      med=apply(M.acc,1,median,na.rm=T),
++                      mean=apply(M.acc,1,mean,na.rm=T))
+> 
+> 
+> ## rank CpGs by decreasing variability (ost variable on top)
+> STAT.M <- STAT.M[order(STAT.M$iqr,decreasing=T),]
+> selected.cg <- rownames(STAT.M)[1:100000]
+> M.acc <- M.acc[selected.cg,]
+> 
+> save('X.acc',
++      'M.acc',
++      'STAT.M',
++      file=file.path(out.dir,'RData/acc.RData'),
++      compress='bzip2')
+Error in bzfile(file, "wb") : cannot open the connection
+Calls: save -> bzfile
+In addition: Warning message:
+In bzfile(file, "wb") :
+  cannot open bzip2-ed file '/icgc/dkfzlsdf/analysis/B080/steiger/data/ACC/output/RData/acc.RData', probable reason 'No such file or directory'
+Execution halted
