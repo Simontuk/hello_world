@@ -6,7 +6,7 @@ corMX1 <- function(cg,               # vector of CpG identifiers
                   w=0,               # in case you want to allow CpGs to be a little off the region of interest
                   X,                 # data.table with expression data
                   M,                 # GenomicRatioSet with methylation data
-                  gid,               # Gene Names for the data.table in X  
+                  gid,               # Gene-ID-list 
                   randproc='none',   # randomization procedure to get NULL distribution
                   prom,              # GRanges object with promoters
                   subset=NULL) {     # if you want to use a subset of the samples (i.e. columns)
@@ -19,10 +19,10 @@ corMX1 <- function(cg,               # vector of CpG identifiers
   geneid2symb.df <- as.data.frame(x[mappedkeys(x)])
   geneid2symb <- as.list(geneid2symb.df[,2])
   names(geneid2symb) <- geneid2symb.df[,1]
-  gid <- gid
+  
   
   P <- prom[which(prom$gene_id %in% gid)]  
-  hm450.sel <- hm450[which(names(hm450) %in% cg)]
+  #hm450.sel <- hm450[which(names(hm450) %in% cg)]
   
   
   ## Old Calculation of Overlaps
@@ -45,18 +45,19 @@ corMX1 <- function(cg,               # vector of CpG identifiers
   
   XX <- X[match(G,gid)]
   #gid <-  gid[match(G,gid)]
-  rnxx <- sub("\\..*","",gid)
+  rnxx <- gid[match(G,gid)]
   XX.chr <- as.character(seqnames(P[rnxx]))
   
   #gidlist <- cbind(gid,rownames(XX))
   ## make sure to reorder the samples ...
   i <- match(colnames(XX),colnames(MM))
+  i <- i[!is.na(i)]
   MM <- MM[,i]
   
   
   ## randomization procedures
   if (randproc == 'gene') { 
-    XX <- X[sample(1:nrow(X),nrow(XX),replace=TRUE),get(subset)]
+    XX <- X[sample(1:nrow(X),nrow(XX),replace=TRUE)]
   }
   else if (randproc == 'cpg') {
     M.dist <- M[which(rownames(M) %in% cg.dist),];
@@ -78,16 +79,19 @@ corMX1 <- function(cg,               # vector of CpG identifiers
   i.x <- match(rnxx,gid)
   
   message("Compute correlation")
-  ## compute correlation
+  ## compute correlations
+  MB <- as.matrix(getBeta(MM))
+  XB <- as.matrix(XX)
+  system.time(
   CC <- do.call("rbind",mclapply(1:nrow(MM),function(i) {
-    cp <- cor(as.numeric(getBeta(MM[i,])),as.numeric(XX[i]),use="everything")
-    cs <- cor(as.numeric(getBeta(MM[i,])),as.numeric(XX[i]),use="everything",method="spearman")
+    cp <- cor(MB[i,],XB[i,],use="everything")
+    cs <- cor(MB[i,],XB[i,],use="everything",method="spearman")
     #     if(sum(is.na(MM[i,]))>sum(is.na(XX[i,]))){
     #       npr <- ncol(MM)-sum(is.na(MM[i,]))  
     #     } else {
     #       npr <- ncol(XX)-sum(is.na(XX[i,]))
     #     }
-    pval <- NA
+    # pval <- NA
     #     if(sum(is.na(XX[i,]))>length(MM)-2 | sum(is.na(MM[i,]))>length(XX)-2){
     #       pval <- NA
     #     }
@@ -100,7 +104,7 @@ corMX1 <- function(cg,               # vector of CpG identifiers
     
     c(cp,cs)
   },mc.cores=8))
-  
+  )
   message("Matching names")
   
   ii <- match(rnxx,names(geneid2symb))
