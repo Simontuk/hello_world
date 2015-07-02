@@ -69,163 +69,171 @@ tss <- promoters(genes,upstream=1,downstream=0)
 ## SELECT MOST VARIABLE CpGs IN DIFFERENT GENOMIC COMPARTMENTS
 selected.cg <- rownames(M.entity)
 
+w <- 100000
+cor.all <- corMX1(selected.cg,w=w,X.entity,M.entity,gid,prom=prom.2kb,subset='ALL')
+cor.all.rnd.gene <- corMX1(selected.cg,w=w,X.entity,M.entity,gid,prom=prom.2kb,subset='ALL',randproc='gene')
+cor.all.rnd.cpg <- corMX1(selected.cg,w=w,X.entity,M.entity,gid,prom=prom.2kb,subset='ALL',randproc='samples')
 ## promoter CpGs
-ov <- findOverlaps(granges(M.entity[selected.cg]),prom.2kb)
-i.prom.cg <- unique(queryHits(ov))
-selected.prom <- selected.cg[i.prom.cg]
+# ov <- findOverlaps(granges(M.entity[selected.cg]),prom.2kb)
+# i.prom.cg <- unique(queryHits(ov))
+# selected.prom <- selected.cg[i.prom.cg]
 
 ## gene-body CpGs
-ov <- findOverlaps(granges(M.entity[selected.cg]),genes)
-i.gb.cg <- unique(queryHits(ov))
-selected.gb <- selected.cg[setdiff(i.gb.cg,i.prom.cg)]
+# ov <- findOverlaps(granges(M.entity[selected.cg]),genes)
+# i.gb.cg <- unique(queryHits(ov))
+# selected.gb <- selected.cg[setdiff(i.gb.cg,i.prom.cg)]
 
 ## distal CpGs
-selected.dist <- selected.cg[-c(i.prom.cg,i.gb.cg)]
+# selected.dist <- selected.cg[-c(i.prom.cg,i.gb.cg)]
 
 
 
-cor.prom <- corMX1(selected.prom,w=0,X.entity,M.entity,gid,prom=prom.2kb,subset='ALL')
-cor.prom.rnd.gene <- corMX1(selected.prom,w=0,X.entity,M.entity,gid,prom=prom.2kb,subset='ALL',randproc='gene')
-cor.prom.rnd.sh <- corMX1(selected.prom,w=0,X.entity,M.entity,gid,prom=prom.2kb,subset='ALL',randproc='samples')
-
-
-cor.gb <- corMX1(selected.gb,w=0,X.entity,M.entity,gid,prom=genebody.2kb,subset='ALL')
-cor.gb.rnd.gene <- corMX1(selected.gb,w=0,X.entity,M.entity,gid,prom=genebody.2kb,subset='ALL',randproc='gene')
-cor.gb.rnd.sh <- corMX1(selected.gb,w=0,X.entity,M.entity,gid,prom=genebody.2kb,subset='ALL',randproc='samples')
-
-##Selecting GB Enhancers
-#CG.GENE <- cor.gb$CG
-CG.gr <- granges(M.entity)
-
-CGenh.gr <- subsetByOverlaps(CG.gr,roadmap.seg.enh)
-
-cor.gb.enh <- cor.gb[cor.gb$CG %in% names(CGenh.gr),]
-cor.gb.enh.rnd.gene <- cor.gb.rnd.gene[cor.gb.rnd.gene$CG %in% names(CGenh.gr),]
-cor.gb.enh.rnd.sh <- cor.gb.rnd.sh[cor.gb.rnd.sh$CG %in% names(CGenh.gr),]
-##
-
-w <- 50000
-cor.dist <- corMX1(selected.dist,w=w,X.entity,M.entity,gid,prom=prom.2kb,subset='ALL')
-cor.dist.rnd.gene <- corMX1(selected.dist,w=w,X.entity,M.entity,gid,prom=prom.2kb,subset='ALL',randproc='gene')
-cor.dist.rnd.sh <- corMX1(selected.dist,w=w,X.entity,M.entity,gid,prom=prom.2kb,subset='ALL',randproc='samples')
-
-##Selecting Distal Enhancers
-CG.GENE <- cor.dist$CG
-CG.gr <- hm450[CG.GENE]
-
-CGenh.gr <- subsetByOverlaps(CG.gr,roadmap.seg.enh)
-
-cor.dist.enh <- cor.dist[cor.dist$CG %in% names(CGenh.gr),]
-cor.dist.enh.rnd.gene <- cor.dist.rnd.gene[cor.dist.rnd.gene$CG %in% names(CGenh.gr),]
-cor.dist.enh.rnd.sh <- cor.dist.rnd.sh[cor.dist.rnd.sh$CG %in% names(CGenh.gr),]
-##
-
-
-which.cor <- 'spearman'
-
-dir.create(fig.dir)
-jpeg(file.path(fig.dir,paste(sep="",dataset,"_cumul.promoter.jpeg")))
-PlotCumDist(list(Observed=cor.prom,RandGene=cor.prom.rnd.gene,ShuffleSamples=cor.prom.rnd.sh),
-            main=paste(sep="","Promoter methylation ",dataset))
-dev.off()
-
-jpeg(file.path(fig.dir,paste(sep="",dataset,"_cumul.genebody.jpeg")))
-PlotCumDist(list(Observed=cor.gb,RandGene=cor.gb.rnd.gene,ShuffleSamples=cor.gb.rnd.sh),
-            main=paste(sep="","Gene body methylation ",dataset))
-dev.off()
-
-jpeg(file.path(fig.dir,paste(sep="",dataset,"_cumul.distal.jpeg")))
-PlotCumDist(list(Observed=cor.dist,RandGene=cor.dist.rnd.gene,ShuffleSamples=cor.dist.rnd.sh),
-            main=paste(sep="","Distal methylation ",dataset))
-dev.off()
-
-jpeg(file.path(fig.dir,paste(sep="",dataset,"_cumul.GB_enhancer.jpeg")))
-PlotCumDist(list(Observed=cor.gb.enh,RandGene=cor.gb.enh.rnd.gene,ShuffleSamples=cor.gb.enh.rnd.sh),
-            main=paste(sep="","Enhancer methylation ",dataset))
-dev.off()
-
-jpeg(file.path(fig.dir,paste(sep="",dataset,"_cumul.DIST_enhancer.jpeg")))
-PlotCumDist(list(Observed=cor.dist.enh,RandGene=cor.dist.enh.rnd.gene,ShuffleSamples=cor.dist.enh.rnd.sh),
-            main=paste(sep="","Enhancer methylation ",dataset))
-dev.off()
-
-
-##GB and GB enhancers
-jpeg(file.path(fig.dir,paste(sep="",dataset,"_hist.gb_enh.jpeg")))
-hist(cor.gb.enh$spearman,prob=T,col=rgb(0,1,0,0.5),main=paste(sep="","Genebody vs Genebody+Enhancer ",dataset))
-hist(cor.gb$spearman,prob=T,col=rgb(1,0,0,0.5),add=T)
-hist(cor.gb.rnd.gene$spearman,prob=T,col=rgb(0,0,1,0.5),add=T)
-dev.off()
-
-##Dist and Dist enhancers
-jpeg(file.path(fig.dir,paste(dataset,"_hist.dist_enh.jpeg")))
-hist(cor.dist.enh$spearman,prob=T,col=rgb(0,1,0,0.5),main=paste("Distal vs Distal+Enhancer ",dataset))
-hist(cor.dist$spearman,prob=T,col=rgb(1,0,0,0.5),add=T)
-hist(cor.dist.rnd.gene$spearman,prob=T,col=rgb(0,0,1,0.5),add=T)
-dev.off()
-
-### some striking examples of correlation
+# cor.prom <- corMX1(selected.prom,w=0,X.entity,M.entity,gid,prom=prom.2kb,subset='ALL')
+# cor.prom.rnd.gene <- corMX1(selected.prom,w=0,X.entity,M.entity,gid,prom=prom.2kb,subset='ALL',randproc='gene')
+# cor.prom.rnd.sh <- corMX1(selected.prom,w=0,X.entity,M.entity,gid,prom=prom.2kb,subset='ALL',randproc='samples')
 #
-## strong negative correlation
-##PlotMX(M.entity[6257,],X.entity[6942,],subtypes=list(tumor=TUMOR,control=CTRL),main="GIPC2 / cg19766489")
-#PlotMX(M.entity[27422,],X.entity[249,],main="GIPC2 / cg19766489")
 #
-#PlotMX(M.entity[16044,],X.entity[1133,],main="GIPC2 / cg19766489")
+# cor.gb <- corMX1(selected.gb,w=0,X.entity,M.entity,gid,prom=genebody.2kb,subset='ALL')
+# cor.gb.rnd.gene <- corMX1(selected.gb,w=0,X.entity,M.entity,gid,prom=genebody.2kb,subset='ALL',randproc='gene')
+# cor.gb.rnd.sh <- corMX1(selected.gb,w=0,X.entity,M.entity,gid,prom=genebody.2kb,subset='ALL',randproc='samples')
 #
-#PlotMXrname(M.acc,X.acc,cor.prom,rowname=2362)
+# ##Selecting GB Enhancers
+# #CG.GENE <- cor.gb$CG
+# CG.gr <- granges(M.entity)
 #
-## strong positive correlation
-##PlotMX(M.entity[24541,],X.entity[11510,],subtypes=list(tumor=TUMOR,control=CTRL),main="NDN / cg25061289")
-#PlotMX(M.entity[24541,],X.entity[11510,],main="NDN / cg25061289")
-
-
-#Build track
-
-file <- file.path(out.dir,'high.neg.cor.dist.bed')
-track.neg <- BuildTrack(cor.dist,cormin=-1,cormax=-0.6,tx=genes)
-write.table("track name='NegCor' description='Negative correlations'",file=file,
-            quote=FALSE,sep="\t",col.names=FALSE,row.names=FALSE)
-write.table(track.neg,file=file,append=TRUE,
-            quote=FALSE,sep="\t",col.names=FALSE,row.names=FALSE)
-
-file <- file.path(out.dir,'high.pos.cor.dist.bed')
-track.pos <- BuildTrack(cor.dist,cormin=0.6,cormax=1,tx=genes)
-write.table("track name='PosCor' description='Positive correlations'",
-            file=file,quote=FALSE,sep="\t",col.names=FALSE,row.names=FALSE)
-write.table(track.pos,file=file,append=TRUE,
-            quote=FALSE,sep="\t",col.names=FALSE,row.names=FALSE)
-
-file <- file.path(out.dir,'high.neg.cor.prom.bed')
-track.neg <- BuildTrack(cor.prom,cormin=-1,cormax=-0.6,tx=genes)
-write.table("track name='NegCorProm' description='Negative correlations Prom'",file=file,
-            quote=FALSE,sep="\t",col.names=FALSE,row.names=FALSE)
-write.table(track.neg,file=file,append=TRUE,
-            quote=FALSE,sep="\t",col.names=FALSE,row.names=FALSE)
-
-file <- file.path(out.dir,'high.pos.cor.prom.bed')
-track.pos <- BuildTrack(cor.prom,cormin=0.6,cormax=1,tx=genes)
-write.table("track name='PosCorProm' description='Positive correlations Prom'",
-            file=file,quote=FALSE,sep="\t",col.names=FALSE,row.names=FALSE)
-write.table(track.pos,file=file,append=TRUE,
-            quote=FALSE,sep="\t",col.names=FALSE,row.names=FALSE)
-
-
+# CGenh.gr <- subsetByOverlaps(CG.gr,roadmap.seg.enh)
 #
+# cor.gb.enh <- cor.gb[cor.gb$CG %in% names(CGenh.gr),]
+# cor.gb.enh.rnd.gene <- cor.gb.rnd.gene[cor.gb.rnd.gene$CG %in% names(CGenh.gr),]
+# cor.gb.enh.rnd.sh <- cor.gb.rnd.sh[cor.gb.rnd.sh$CG %in% names(CGenh.gr),]
+# ##
+#
+# w <- 50000
+# cor.dist <- corMX1(selected.dist,w=w,X.entity,M.entity,gid,prom=prom.2kb,subset='ALL')
+# cor.dist.rnd.gene <- corMX1(selected.dist,w=w,X.entity,M.entity,gid,prom=prom.2kb,subset='ALL',randproc='gene')
+# cor.dist.rnd.sh <- corMX1(selected.dist,w=w,X.entity,M.entity,gid,prom=prom.2kb,subset='ALL',randproc='samples')
+#
+# ##Selecting Distal Enhancers
+# CG.GENE <- cor.dist$CG
+# CG.gr <- hm450[CG.GENE]
+#
+# CGenh.gr <- subsetByOverlaps(CG.gr,roadmap.seg.enh)
+#
+# cor.dist.enh <- cor.dist[cor.dist$CG %in% names(CGenh.gr),]
+# cor.dist.enh.rnd.gene <- cor.dist.rnd.gene[cor.dist.rnd.gene$CG %in% names(CGenh.gr),]
+# cor.dist.enh.rnd.sh <- cor.dist.rnd.sh[cor.dist.rnd.sh$CG %in% names(CGenh.gr),]
+# ##
+#
+#
+# which.cor <- 'spearman'
+#
+# dir.create(fig.dir)
+# jpeg(file.path(fig.dir,paste(sep="",dataset,"_cumul.promoter.jpeg")))
+# PlotCumDist(list(Observed=cor.prom,RandGene=cor.prom.rnd.gene,ShuffleSamples=cor.prom.rnd.sh),
+#             main=paste(sep="","Promoter methylation ",dataset))
+# dev.off()
+#
+# jpeg(file.path(fig.dir,paste(sep="",dataset,"_cumul.genebody.jpeg")))
+# PlotCumDist(list(Observed=cor.gb,RandGene=cor.gb.rnd.gene,ShuffleSamples=cor.gb.rnd.sh),
+#             main=paste(sep="","Gene body methylation ",dataset))
+# dev.off()
+#
+# jpeg(file.path(fig.dir,paste(sep="",dataset,"_cumul.distal.jpeg")))
+# PlotCumDist(list(Observed=cor.dist,RandGene=cor.dist.rnd.gene,ShuffleSamples=cor.dist.rnd.sh),
+#             main=paste(sep="","Distal methylation ",dataset))
+# dev.off()
+#
+# jpeg(file.path(fig.dir,paste(sep="",dataset,"_cumul.GB_enhancer.jpeg")))
+# PlotCumDist(list(Observed=cor.gb.enh,RandGene=cor.gb.enh.rnd.gene,ShuffleSamples=cor.gb.enh.rnd.sh),
+#             main=paste(sep="","Enhancer methylation ",dataset))
+# dev.off()
+#
+# jpeg(file.path(fig.dir,paste(sep="",dataset,"_cumul.DIST_enhancer.jpeg")))
+# PlotCumDist(list(Observed=cor.dist.enh,RandGene=cor.dist.enh.rnd.gene,ShuffleSamples=cor.dist.enh.rnd.sh),
+#             main=paste(sep="","Enhancer methylation ",dataset))
+# dev.off()
+#
+#
+# ##GB and GB enhancers
+# jpeg(file.path(fig.dir,paste(sep="",dataset,"_hist.gb_enh.jpeg")))
+# hist(cor.gb.enh$spearman,prob=T,col=rgb(0,1,0,0.5),main=paste(sep="","Genebody vs Genebody+Enhancer ",dataset))
+# hist(cor.gb$spearman,prob=T,col=rgb(1,0,0,0.5),add=T)
+# hist(cor.gb.rnd.gene$spearman,prob=T,col=rgb(0,0,1,0.5),add=T)
+# dev.off()
+#
+# ##Dist and Dist enhancers
+# jpeg(file.path(fig.dir,paste(dataset,"_hist.dist_enh.jpeg")))
+# hist(cor.dist.enh$spearman,prob=T,col=rgb(0,1,0,0.5),main=paste("Distal vs Distal+Enhancer ",dataset))
+# hist(cor.dist$spearman,prob=T,col=rgb(1,0,0,0.5),add=T)
+# hist(cor.dist.rnd.gene$spearman,prob=T,col=rgb(0,0,1,0.5),add=T)
+# dev.off()
+#
+# ### some striking examples of correlation
+# #
+# ## strong negative correlation
+# ##PlotMX(M.entity[6257,],X.entity[6942,],subtypes=list(tumor=TUMOR,control=CTRL),main="GIPC2 / cg19766489")
+# #PlotMX(M.entity[27422,],X.entity[249,],main="GIPC2 / cg19766489")
+# #
+# #PlotMX(M.entity[16044,],X.entity[1133,],main="GIPC2 / cg19766489")
+# #
+# #PlotMXrname(M.acc,X.acc,cor.prom,rowname=2362)
+# #
+# ## strong positive correlation
+# ##PlotMX(M.entity[24541,],X.entity[11510,],subtypes=list(tumor=TUMOR,control=CTRL),main="NDN / cg25061289")
+# #PlotMX(M.entity[24541,],X.entity[11510,],main="NDN / cg25061289")
+#
+#
+# #Build track
+#
+# file <- file.path(out.dir,'high.neg.cor.dist.bed')
+# track.neg <- BuildTrack(cor.dist,cormin=-1,cormax=-0.6,tx=genes)
+# write.table("track name='NegCor' description='Negative correlations'",file=file,
+#             quote=FALSE,sep="\t",col.names=FALSE,row.names=FALSE)
+# write.table(track.neg,file=file,append=TRUE,
+#             quote=FALSE,sep="\t",col.names=FALSE,row.names=FALSE)
+#
+# file <- file.path(out.dir,'high.pos.cor.dist.bed')
+# track.pos <- BuildTrack(cor.dist,cormin=0.6,cormax=1,tx=genes)
+# write.table("track name='PosCor' description='Positive correlations'",
+#             file=file,quote=FALSE,sep="\t",col.names=FALSE,row.names=FALSE)
+# write.table(track.pos,file=file,append=TRUE,
+#             quote=FALSE,sep="\t",col.names=FALSE,row.names=FALSE)
+#
+# file <- file.path(out.dir,'high.neg.cor.prom.bed')
+# track.neg <- BuildTrack(cor.prom,cormin=-1,cormax=-0.6,tx=genes)
+# write.table("track name='NegCorProm' description='Negative correlations Prom'",file=file,
+#             quote=FALSE,sep="\t",col.names=FALSE,row.names=FALSE)
+# write.table(track.neg,file=file,append=TRUE,
+#             quote=FALSE,sep="\t",col.names=FALSE,row.names=FALSE)
+#
+# file <- file.path(out.dir,'high.pos.cor.prom.bed')
+# track.pos <- BuildTrack(cor.prom,cormin=0.6,cormax=1,tx=genes)
+# write.table("track name='PosCorProm' description='Positive correlations Prom'",
+#             file=file,quote=FALSE,sep="\t",col.names=FALSE,row.names=FALSE)
+# write.table(track.pos,file=file,append=TRUE,
+#             quote=FALSE,sep="\t",col.names=FALSE,row.names=FALSE)
+#
+#
+# #
+#
+# save('cor.dist',
+#      'cor.dist.rnd.gene',
+#      'cor.dist.rnd.sh',
+#      'cor.prom',
+#      'cor.prom.rnd.gene',
+#      'cor.prom.rnd.sh',
+#      'cor.gb',
+#      'cor.gb.rnd.gene',
+#      'cor.gb.rnd.sh',
+#      'cor.gb.enh',
+#      'cor.gb.enh.rnd.gene',
+#      'cor.gb.enh.rnd.sh',
+#      'cor.dist.enh',
+#      'cor.dist.enh.rnd.gene',
+#      'cor.dist.enh.rnd.sh',
+#      file=file.path(out.dir,paste('RData/',dataset,'.RData')))
 
-save('cor.dist',
-     'cor.dist.rnd.gene',
-     'cor.dist.rnd.sh',
-     'cor.prom',
-     'cor.prom.rnd.gene',
-     'cor.prom.rnd.sh',
-     'cor.gb',
-     'cor.gb.rnd.gene',
-     'cor.gb.rnd.sh',
-     'cor.gb.enh',
-     'cor.gb.enh.rnd.gene',
-     'cor.gb.enh.rnd.sh',
-     'cor.dist.enh',
-     'cor.dist.enh.rnd.gene',
-     'cor.dist.enh.rnd.sh',
-     file=file.path(out.dir,paste('RData/',dataset,'.RData')))
-
+save('cor.all',
+     'cor.all.rnd.gene',
+     'cor.all.rnd.cpg',
+     file=file.path(out.dir,paste('RData/',dataset,'.RData',sep="")))
